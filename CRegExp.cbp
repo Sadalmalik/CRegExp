@@ -32,14 +32,10 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 		</Compiler>
-		<Unit filename="bitmask.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="bitmask.h" />
-		<Unit filename="cregex.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="cregex.h" />
+		<Unit filename="bitmask.cpp" />
+		<Unit filename="bitmask.hpp" />
+		<Unit filename="cregex.cpp" />
+		<Unit filename="cregex.hpp" />
 		<Unit filename="main.cpp" />
 		<Extensions />
 	</Project>
