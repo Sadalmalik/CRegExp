@@ -1,16 +1,32 @@
 #include <iostream>
-#include "cregex.h"
+#include "bitmask.hpp"
 
 using namespace std;
 
+/*
 void TestMatch(RegexState*reg, const char* str)
 {
     bool match = Match(reg, str);
     cout << "Test match of " << str << " and regexp: " << match << endl;
 }
+//*/
+
+void TestSetBit(BitMask*mask, int bit)
+{
+    printf("Try set %d bit\n", bit);
+    Bitmask_SetBit(mask, bit, true);
+}
+
+void TestGetBit(BitMask*mask, int bit)
+{
+    bool val = Bitmask_GetBit(mask, bit);
+    if (val) printf("bit[%d] = true\n", bit);
+    else     printf("bit[%d] = false\n", bit);
+}
 
 int main()
 {
+    /*
     InitRegex(100);
     RegexState*reg = ParseRegexp("abc?x..");
 
@@ -20,8 +36,37 @@ int main()
     TestMatch(reg, "abxyz");
     TestMatch(reg, "abdxyz");
     TestMatch(reg, "bddrcg");
+    /*/
 
-    cout << "Done!" << endl;
+    BitMask *mask  = Bitmask_Create(256);
+
+    printf("Set bits:\n");
+    TestSetBit(mask, 0);
+    TestSetBit(mask, 17);
+    TestSetBit(mask, 230);
+    TestSetBit(mask, 255);
+    TestSetBit(mask, 290);
+    TestSetBit(mask, -15);
+    printf("\n");
+
+    printf("Get bits:\n");
+    TestGetBit(mask, -25);
+    TestGetBit(mask, -15);
+    TestGetBit(mask, -1);
+    TestGetBit(mask, 0);
+    TestGetBit(mask, 1);
+    TestGetBit(mask, 229);
+    TestGetBit(mask, 230);
+    TestGetBit(mask, 231);
+    TestGetBit(mask, 254);
+    TestGetBit(mask, 255);
+    TestGetBit(mask, 256);
+    TestGetBit(mask, 290);
+    printf("\n");
+
+    Bitmask_Destroy(mask);
+
+    printf("Done!\n");
 
     return 0;
 }
