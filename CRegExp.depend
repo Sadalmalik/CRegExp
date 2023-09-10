@@ -1,0 +1,9 @@
+# depslib dependency file v1.0
+1694348123 source:d:\programming\cpp\cregexp\main.cpp
+	<iostream>
+	"cregex.h"
+
+1694348224 d:\programming\cpp\cregexp\cregex.h
+	<stdlib.h>
+	<ctype.h>
+
