@@ -5,46 +5,28 @@
 #include <ctype.h>
 #include <stdbool.h>
 
-// Определяем размер начального блока памяти для стейтов.
-#define INITIAL_STATE_CAPACITY 100
+typedef struct RegexState RegexState;
+typedef struct RegexMatch RegexMatch;
 
-typedef enum {
-    Char,
-    Any,
-    Repeat,
-    Optional,
-    Charlist,
-    Variants,
-    Group,
-    GroupEnd,
-    End
-} StateType;
-
-typedef struct RegexState {
+struct RegexState {
     char type;
     char ch;
     int params;
-    struct RegexState* prev;
-    struct RegexState* next;
-    struct RegexState* inner;
-} RegexState;
+    RegexState* prev;
+    RegexState* next;
+    RegexState* inner;
+};
 
-typedef struct {
+struct RegexMatch
+{
+    bool success;
     const char* start;
     const char* end;
-} Substring;
+};
 
-typedef struct {
-    int count;
-    Substring* matches;
-} RegexMatch;
-
-void InitRegex(int initialCapacity);
-RegexState* ParseRegexp(const char* pattern);
-bool isMatch(RegexState* state, const char* str);
-bool Match(RegexState* regexp, const char* str);
-RegexMatch* findMatchFromPosition(RegexState* state, const char* str, const char* startPos);
-RegexMatch* Find(RegexState* regexp, const char* str);
-void DumpRegex(RegexState*state);
+RegexState* Regexp_Parse    (const char* pattern);
+RegexMatch  Regexp_Match    (RegexState* regexp, const char* str);
+RegexMatch  Regexp_Find     (RegexState* regexp, const char* str);
+//void        Regexp_Dump     (RegexState*state);
 
 #endif

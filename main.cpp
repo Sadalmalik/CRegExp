@@ -1,13 +1,22 @@
 #include <iostream>
 #include "bitmask.hpp"
+#include "cregex.hpp"
 
 using namespace std;
 
-/*
+//*
 void TestMatch(RegexState*reg, const char* str)
 {
-    bool match = Match(reg, str);
-    cout << "Test match of " << str << " and regexp: " << match << endl;
+    RegexMatch match = Regexp_Match(reg, str);
+    printf("Match of '%s' and regexp: ", str);
+    if (match.success)
+    {
+        printf("true\n\n");
+    }
+    else
+    {
+        printf("false\n\n");
+    }
 }
 //*/
 
@@ -26,9 +35,8 @@ void TestGetBit(BitMask*mask, int bit)
 
 int main()
 {
-    /*
-    InitRegex(100);
-    RegexState*reg = ParseRegexp("abc?x..");
+    //*
+    RegexState*reg = Regexp_Parse("abc?x..");
 
     TestMatch(reg, "abcxyz");
     TestMatch(reg, "abcxy");
@@ -65,7 +73,7 @@ int main()
     printf("\n");
 
     Bitmask_Destroy(mask);
-
+    //*/
     printf("Done!\n");
 
     return 0;

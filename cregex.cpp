@@ -1,16 +1,5 @@
 #include "cregex.hpp"
 
-static RegexState* stateMemory = NULL;
-static int stateIndex = 0;
-static int stateCapacity = 0;
-
-void InitRegex(int initialCapacity)
-{
-    stateMemory = (RegexState*) malloc(sizeof(RegexState) * initialCapacity);
-    stateCapacity = initialCapacity;
-    stateIndex = 0;
-}
-
 void LinkStates(RegexState*a, RegexState*b)
 {
     if (a != nullptr) a->next = b;
@@ -19,13 +8,7 @@ void LinkStates(RegexState*a, RegexState*b)
 
 RegexState* CreateState(char type)
 {
-    if (stateIndex >= stateCapacity)
-    {
-        stateCapacity *= 2;
-        // Breaks all links to existing regexps!
-        stateMemory = (RegexState*)realloc(stateMemory, sizeof(RegexState) * stateCapacity);
-    }
-    RegexState* state = &stateMemory[stateIndex++];
+    RegexState* state = (RegexState*) malloc(sizeof(RegexState));
     state->type = type;
     state->ch = 0;
     state->prev = nullptr;
@@ -41,19 +24,9 @@ RegexState* CreateStateChar(char ch)
     return s;
 }
 
-RegexState* InternalParseRegexp(const char** pattern)
+RegexState* Regexp_ParseInternal(const char** pattern)
 {
-    int storedIndex = stateIndex;
-    RegexState *stack[32];
     RegexState *head, *current, *prev = nullptr;
-
-    goto start;
-terminate:
-    // If we can't parse regex - we will return system to initial state
-    // Also - I think we need add some error messages somewhere here
-    stateIndex = storedIndex;
-    return nullptr;
-start:
 
     while (*pattern &&
           **pattern != '\0' &&
@@ -73,7 +46,7 @@ start:
         case '?':
         case '*':
             if (prev == nullptr)
-                goto terminate;
+                return nullptr;
             current = CreateState(**pattern);
             current->inner = prev;
             // Step back
@@ -81,9 +54,9 @@ start:
             break;
         case '(':
             (*pattern)++;
-            RegexState*temp = InternalParseRegexp(pattern);
+            RegexState*temp = Regexp_ParseInternal(pattern);
             if (!*pattern || **pattern != ')')
-                goto terminate;
+                return nullptr;
             current = CreateState('(');
             current->inner = temp;
             break;
@@ -103,25 +76,35 @@ start:
 
     if (prev)
     {
-        RegexState* match = CreateState('\0');
+        current = CreateState('\0');
         LinkStates(prev, current);
     }
 
     return head;
 }
 
-RegexState* ParseRegexp(const char* pattern)
+RegexState* Regexp_Parse(const char* pattern)
 {
-    return InternalParseRegexp(&pattern);
+    return Regexp_ParseInternal(&pattern);
 }
 
-bool isMatch(RegexState* state, const char* str)
+RegexMatch Regexp_MatchInternal(RegexState* state, const char* str)
 {
+    RegexMatch match;
+    match.success = false;
+    match.start = str;
+    match.end = str;
+
     if (state == nullptr)
-        return false;
+    {
+        return match;
+    }
 
     if (state->type == '\0')
-        return true;
+    {
+        match.success = true;
+        return match;
+    }
 
     while (state->type != '\0')
     {
@@ -129,58 +112,69 @@ bool isMatch(RegexState* state, const char* str)
         {
             case '^':
                 // Error!
-                return false;
+                match.success = false;
+                return match;
             case '$':
                 // Check for end
-                return *str == '\0';
+                match.success = (*str == '\0');
+                return match;
             case 'c':
                 if (*str == state->ch)
-                    return isMatch(state->next, str + 1);
+                    return Regexp_MatchInternal(state->next, str + 1);
                 break;
             case '.':
                 if (*str != '\0')
-                    return isMatch(state->next, str + 1);
+                    return Regexp_MatchInternal(state->next, str + 1);
                 break;
             case '*':
-                if (*str != '\0')
-                    return isMatch(state->next, str + 1);
+                while(true)
+                {
+                    RegexMatch subMatchRepeat = Regexp_MatchInternal(state->inner, str + 1);
+                    if (!subMatchRepeat.success)
+                        break;
+                    str = subMatchRepeat.end;
+                }
                 break;
             case '?':
-                if (*str != '\0')
-                    return isMatch(state->next, str + 1);
+                RegexMatch subMatchBranch = Regexp_MatchInternal(state->inner, str + 1);
+                if (subMatchBranch.success)
+                    str = subMatchBranch.end;
                 break;
         }
+        state = state->next;
     }
 
-    return false;
+    match.success = true;
+    match.end = str;
+    return match;
 }
 
-bool Match(RegexState* regexp, const char* str)
+RegexMatch Regexp_Match(RegexState* regexp, const char* str)
 {
-    if (regexp->type == '^')
-        return isMatch(regexp->next, str);
+    RegexMatch match;
+    match.success = false;
+    match.start = str;
+    match.end = str;
 
+    if (regexp->type == '^')
+    {
+        return Regexp_MatchInternal(regexp->next, str);
+    }
     do
     {
-        if (isMatch(regexp, str))
-            return true;
+        match = Regexp_MatchInternal(regexp, str);
+        if (match.success)
+            return match;
     }
     while (*str++ != '\0');
-    return false;
+
+    match.success = false;
+    return match;
 }
 
-RegexMatch* findMatchFromPosition(RegexState* state, const char* str, const char* startPos) {
-    if (isMatch(state, str)) {
-        RegexMatch* match = (RegexMatch*)malloc(sizeof(RegexMatch));
-        //match->start = startPos;
-        //match->end = str;  // ”казатель на последний символ совпадени€
-        //match->next = NULL;
-        return match;
-    }
-    return NULL;
-}
-
-RegexMatch* Find(RegexState* regexp, const char* str) {
+RegexMatch Regexp_Find(RegexState* regexp, const char* str)
+{
+    /*
     RegexMatch *matches = NULL, *lastMatch = NULL;
     const char* currentPos = str;
 
@@ -198,6 +192,10 @@ RegexMatch* Find(RegexState* regexp, const char* str) {
             currentPos++;
         }
     }
-
-    return matches;
+    //*/
+    RegexMatch match;
+    match.success = false;
+    match.start = nullptr;
+    match.end = nullptr;
+    return match;
 }

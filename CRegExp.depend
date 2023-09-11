@@ -27,10 +27,15 @@
 	<ctype.h>
 	<stdio.h>
 
-1694375926 source:d:\programming\cpp\cregexp\cregex.cpp
-	"cregex.h"
+1694471416 source:d:\programming\cpp\cregexp\cregex.cpp
+	"cregex.hpp"
 
 1694384001 d:\programming\cpp\cregexp\bitmask.hpp
 	<stdbool.h>
 	<stdint.h>
+
+1694471116 d:\programming\cpp\cregexp\cregex.hpp
+	<stdlib.h>
+	<ctype.h>
+	<stdbool.h>
 
