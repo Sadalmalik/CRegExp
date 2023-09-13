@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <string.h>
 #include "cregex.hpp"
 
 void LinkStates(RegexState*a, RegexState*b)
@@ -26,7 +28,7 @@ RegexState* CreateStateChar(char ch)
 
 RegexState* Regexp_ParseInternal(const char** pattern)
 {
-    RegexState *head, *current, *prev = nullptr;
+    RegexState *head = nullptr, *current = nullptr, *prev = nullptr;
 
     while (*pattern &&
           **pattern != '\0' &&
@@ -59,6 +61,7 @@ RegexState* Regexp_ParseInternal(const char** pattern)
                 return nullptr;
             current = CreateState('(');
             current->inner = temp;
+            temp->prev = current; // Keep link for future usage
             break;
         }
 
@@ -142,6 +145,7 @@ RegexMatch Regexp_MatchInternal(RegexState* state, const char* str)
                 break;
         }
         state = state->next;
+        str++;
     }
 
     match.success = true;
@@ -198,4 +202,26 @@ RegexMatch Regexp_Find(RegexState* regexp, const char* str)
     match.start = nullptr;
     match.end = nullptr;
     return match;
+}
+
+void pind(int indent)
+{
+    while(indent-->0)
+        printf("  ");
+}
+
+void Regexp_Dump(RegexState*state, int indent)
+{
+    if (state==nullptr)
+    {
+        pind(indent);
+        printf("null state!\n");
+        return;
+    }
+
+    pind(indent); printf("State '%c' : '%c' %p\n", state->type, state->ch, (void*) state);
+    if (state->inner != nullptr)
+        Regexp_Dump(state->inner, indent + 1);
+    if (state->next != nullptr)
+        Regexp_Dump(state->next, indent);
 }

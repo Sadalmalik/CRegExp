@@ -8,7 +8,7 @@ using namespace std;
 void TestMatch(RegexState*reg, const char* str)
 {
     RegexMatch match = Regexp_Match(reg, str);
-    printf("Match of '%s' and regexp: ", str);
+    printf("Match of '%s' and regex: ", str);
     if (match.success)
     {
         printf("true\n\n");
@@ -18,8 +18,7 @@ void TestMatch(RegexState*reg, const char* str)
         printf("false\n\n");
     }
 }
-//*/
-
+/*/
 void TestSetBit(BitMask*mask, int bit)
 {
     printf("Try set %d bit\n", bit);
@@ -32,18 +31,36 @@ void TestGetBit(BitMask*mask, int bit)
     if (val) printf("bit[%d] = true\n", bit);
     else     printf("bit[%d] = false\n", bit);
 }
+//*/
+
+void TestParse(const char* str)
+{
+    RegexState*reg = Regexp_Parse(str);
+    printf("\n\nregex: %s %p\n", str, (void*)reg);
+    Regexp_Dump(reg, 0);
+
+}
 
 int main()
 {
     //*
-    RegexState*reg = Regexp_Parse("abc?x..");
+    RegexState*reg;
 
+    TestParse("a");
+    TestParse("abc");
+    TestParse("abc?");
+    TestParse("abc?x..");
+    TestParse("a(bc)?d");
+
+    /*
     TestMatch(reg, "abcxyz");
     TestMatch(reg, "abcxy");
     TestMatch(reg, "abcx");
     TestMatch(reg, "abxyz");
     TestMatch(reg, "abdxyz");
     TestMatch(reg, "bddrcg");
+    //*/
+
     /*/
 
     BitMask *mask  = Bitmask_Create(256);

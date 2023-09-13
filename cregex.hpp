@@ -11,7 +11,6 @@ typedef struct RegexMatch RegexMatch;
 struct RegexState {
     char type;
     char ch;
-    int params;
     RegexState* prev;
     RegexState* next;
     RegexState* inner;
@@ -27,6 +26,6 @@ struct RegexMatch
 RegexState* Regexp_Parse    (const char* pattern);
 RegexMatch  Regexp_Match    (RegexState* regexp, const char* str);
 RegexMatch  Regexp_Find     (RegexState* regexp, const char* str);
-//void        Regexp_Dump     (RegexState*state);
+void        Regexp_Dump     (RegexState*state, int indent);
 
 #endif
