@@ -6,30 +6,50 @@
 #include <stdbool.h>
 #include <string>
 
-namespace LightRegexp
+namespace LightRegex
 {
-    typedef struct RegexpState RegexpState;
-    typedef struct RegexpMatch RegexpMatch;
+    using namespace std;
 
-    struct RegexpState {
+    typedef struct Regex TRegex;
+    typedef struct State TState;
+    typedef struct Match TMatch;
+    typedef struct Group TGroup;
+
+
+    struct State
+    {
         char type;
         char match;
-        RegexpState* prev;
-        RegexpState* next;
-        RegexpState* inner;
+        TState* prev;
+        TState* next;
+        TState* inner;
     };
 
-    struct RegexpMatch
+    struct Regex
     {
-        bool success;
+        string raw;
+        int groups;
+        int size;
+        TState states[0];
+    };
+
+    struct Group
+    {
         std::string substring;
     };
 
-    RegexpState*    Regexp_Create   (std::string pattern);
-    void            Regexp_Destroy  (RegexpState* regexp);
-    RegexpMatch     Regexp_Match    (RegexpState* regexp, std::string str);
-    RegexpMatch     Regexp_Find     (RegexpState* regexp, std::string str);
-    void            Regexp_Dump     (RegexpState* regexp, int indent);
+    struct Match
+    {
+        bool success;
+        int size;
+        TGroup groups[0];
+    };
+
+    TRegex* Create   (std::string pattern);
+    void    Destroy  (TRegex* regexp);
+    TMatch  Match    (TRegex* regexp, std::string str);
+    TMatch  Find     (TRegex* regexp, std::string str);
+    void    Dump     (TRegex* regexp);
 }
 
 #endif

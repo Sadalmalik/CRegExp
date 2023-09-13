@@ -3,15 +3,15 @@
 #include <stdio.h>
 #include <stack>
 
-namespace LightRegexp
+namespace LightRegex
 {
-    void LinkStates(RegexpState*a, RegexpState*b)
+    void LinkStates(TState*a, TState*b)
     {
         if (a != nullptr) a->next = b;
         if (b != nullptr) b->prev = a;
     }
 
-    void SetupState(RegexpState* state, char type, char match)
+    void SetupState(TState* state, char type, char match)
     {
         state->type  = type;
         state->match = match;
@@ -20,25 +20,28 @@ namespace LightRegexp
         state->inner = nullptr;
     }
 
-    RegexpState* Regexp_Create(std::string pattern)
+    TRegex* Create(std::string pattern)
     {
-        std::stack<RegexpState*> statesStack;
-
         int usedStates = 0;
         int bufferSize = pattern.size() + 1;
-        RegexpState*regexp = (RegexpState*) malloc(bufferSize * sizeof(RegexpState));
+
+        void*memory = malloc(sizeof(TRegex) + bufferSize * sizeof(TState));
+        TRegex*regexp = (TRegex*)memory;
+        regexp->groups = 0;
+        TState*states = (TState*) (regexp + 1);
 
         auto it = pattern.begin();
         auto end = pattern.end();
 
-        RegexpState *prev = nullptr;
-        RegexpState *current = nullptr;
+        TState *prev = nullptr;
+        TState *current = nullptr;
+        std::stack<TState*> statesStack;
         while (it != end)
         {
             if (usedStates>=bufferSize)
             {
-                printf("LightRegexpStatep::Error: Unexpected out of memory!\n");
-                Regexp_Destroy(regexp); // Free memory on fail
+                printf("LightRegex::Error: Unexpected out of memory!\n");
+                Destroy(regexp); // Free memory on fail
                 return nullptr;
             }
             switch (*it)
@@ -46,29 +49,29 @@ namespace LightRegexp
             case '^':
             case '$':
             case '.':
-                current = &regexp[usedStates++];
+                current = &states[usedStates++];
                 SetupState(current, *it, '\0');
                 break;
             case '?':
             case '*':
                 if (prev == nullptr)
                     return nullptr;
-                current = &regexp[usedStates++];
+                current = &states[usedStates++];
                 SetupState(current, *it, '\0');
                 current->inner = prev;          // Put prev as child
                 prev = prev->prev;              // Step back
                 current->inner->prev = current; // Link parent
                 break;
             case '(':
-                current = &regexp[usedStates++];
+                current = &states[usedStates++];
                 SetupState(current, *it, '\0');
                 statesStack.push(current);
                 break;
             case ')':
                 if (statesStack.empty())
                 {
-                    printf("LightRegexpStatep::Error: incorrect order of parentheses ( ) !\n");
-                    Regexp_Destroy(regexp); // Free memory on fail
+                    printf("LightRegex::Error: incorrect order of parentheses ( ) !\n");
+                    Destroy(regexp); // Free memory on fail
                     return nullptr;
                 }
                 current = statesStack.top();
@@ -77,9 +80,10 @@ namespace LightRegexp
                 prev = current->prev;
                 current->inner = current->next;
                 current->next = nullptr;
+                regexp->groups++;
                 break;
             default:
-                current = &regexp[usedStates++];
+                current = &states[usedStates++];
                 SetupState(current, 'c', *it);
             }
 
@@ -92,29 +96,32 @@ namespace LightRegexp
 
         if (prev)
         {
-            current = &regexp[usedStates++];
+            current = &states[usedStates++];
             SetupState(current, '\0', '\0');
             LinkStates(prev, current);
         }
 
         if (!statesStack.empty())
         {
-            printf("LightRegexpStatep::Error: incorrect order of parentheses ( ) !\n");
-            Regexp_Destroy(regexp); // Free memory on fail
+            printf("LightRegex::Error: incorrect order of parentheses ( ) !\n");
+            Destroy(regexp); // Free memory on fail
             return nullptr;
         }
 
-        regexp = (RegexpState*) realloc(regexp, usedStates * sizeof(RegexpState));
+        regexp = (TRegex*) realloc(memory, sizeof(TRegex) + usedStates * sizeof(TState));
+        new (&regexp->raw) std::string();
+        regexp->raw = pattern;
+        regexp->size = usedStates;
         return regexp;
     }
 
-    void Regexp_Destroy(RegexpState* regexp)
+    void Destroy(TRegex* regexp)
     {
         if (regexp != nullptr)
             free(regexp);
     }
 
-    RegexpMatch Regexp_MatchInternal(RegexpState* state, std::string str)
+    TMatch Regexp_MatchInternal(TRegex* state, std::string str)
     {
         /*
         RegexpMatch RegexpMatch;
@@ -173,17 +180,15 @@ namespace LightRegexp
         }
         //*/
 
-        RegexpMatch match;
+        TMatch match;
         match.success = true;
-        match.substring = str;
         return match;
     }
 
-    RegexpMatch Regexp_Match(RegexpState* RegexpStatep, std::string str)
+    TMatch Match(TRegex* regexp, std::string str)
     {
-        RegexpMatch match;
+        TMatch match;
         match.success = false;
-        match.substring = str;
 
         /*
         if (RegexpStatep->type == '^')
@@ -203,7 +208,7 @@ namespace LightRegexp
         return match;
     }
 
-    RegexpMatch Regexp_Find(RegexpState* RegexpStatep, std::string str)
+    TMatch Find(TRegex* regexp, std::string str)
     {
         /*
         RegexpMatch *RegexpMatches = NULL, *lastRegexpMatch = NULL;
@@ -224,9 +229,8 @@ namespace LightRegexp
             }
         }
         //*/
-        RegexpMatch match;
+        TMatch match;
         match.success = false;
-        match.substring = str;
         return match;
     }
 
@@ -236,7 +240,7 @@ namespace LightRegexp
             printf("  ");
     }
 
-    void Regexp_Dump(RegexpState*state, int indent)
+    void DumpState(TState* state, int indent)
     {
         if (state==nullptr)
         {
@@ -247,8 +251,19 @@ namespace LightRegexp
 
         pind(indent); printf("State '%c' : '%c' %p\n", state->type, state->match, (void*) state);
         if (state->inner != nullptr)
-            Regexp_Dump(state->inner, indent + 1);
+            DumpState(state->inner, indent + 1);
         if (state->next != nullptr)
-            Regexp_Dump(state->next, indent);
+            DumpState(state->next, indent);
+    }
+
+    void Dump(TRegex* regexp)
+    {
+        if (regexp==nullptr)
+        {
+            printf("null regexp!\n");
+            return;
+        }
+
+        DumpState(regexp->states, 0);
     }
 }

@@ -5,11 +5,11 @@
 #include "cregex.hpp"
 
 using namespace std;
-using namespace LightRegexp;
 
-//*
-void TestMatch(RegexpState*reg, std::string str)
+/*
+void TestMatch(TRegex*reg, std::string str)
 {
+
     RegexpMatch match = Regexp_Match(reg, str);
     printf("Match of '%s' and regex: ", str.c_str());
     if (match.success)
@@ -21,7 +21,7 @@ void TestMatch(RegexpState*reg, std::string str)
         printf("false\n\n");
     }
 }
-/*/
+//* /
 void TestSetBit(BitMask*mask, int bit)
 {
     printf("Try set %d bit\n", bit);
@@ -39,9 +39,9 @@ void TestGetBit(BitMask*mask, int bit)
 void TestParse(std::string str)
 {
     printf("regex '%s':\n", str.c_str());
-    RegexpState*reg = Regexp_Create(str);
-    Regexp_Dump(reg, 0);
-    Regexp_Destroy(reg);
+    LightRegex::TRegex*reg = LightRegex::Create(str);
+    LightRegex::Dump(reg);
+    LightRegex::Destroy(reg);
     printf("\n");
 
 }
