@@ -1,14 +1,17 @@
 #include <iostream>
+#include <string>
+
 #include "bitmask.hpp"
 #include "cregex.hpp"
 
 using namespace std;
+using namespace LightRegexp;
 
 //*
-void TestMatch(RegexState*reg, const char* str)
+void TestMatch(RegexpState*reg, std::string str)
 {
-    RegexMatch match = Regexp_Match(reg, str);
-    printf("Match of '%s' and regex: ", str);
+    RegexpMatch match = Regexp_Match(reg, str);
+    printf("Match of '%s' and regex: ", str.c_str());
     if (match.success)
     {
         printf("true\n\n");
@@ -33,24 +36,28 @@ void TestGetBit(BitMask*mask, int bit)
 }
 //*/
 
-void TestParse(const char* str)
+void TestParse(std::string str)
 {
-    RegexState*reg = Regexp_Parse(str);
-    printf("\n\nregex: %s %p\n", str, (void*)reg);
+    printf("regex '%s':\n", str.c_str());
+    RegexpState*reg = Regexp_Create(str);
     Regexp_Dump(reg, 0);
+    Regexp_Destroy(reg);
+    printf("\n");
 
 }
 
 int main()
 {
     //*
-    RegexState*reg;
+    //RegexState*reg;
 
     TestParse("a");
     TestParse("abc");
     TestParse("abc?");
     TestParse("abc?x..");
+    TestParse("a(bc)de");
     TestParse("a(bc)?d");
+    TestParse("a(bcx)*ef?t");
 
     /*
     TestMatch(reg, "abcxyz");

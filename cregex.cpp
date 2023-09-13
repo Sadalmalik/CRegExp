@@ -1,227 +1,254 @@
-#include <stdio.h>
-#include <string.h>
 #include "cregex.hpp"
 
-void LinkStates(RegexState*a, RegexState*b)
-{
-    if (a != nullptr) a->next = b;
-    if (b != nullptr) b->prev = a;
-}
+#include <stdio.h>
+#include <stack>
 
-RegexState* CreateState(char type)
+namespace LightRegexp
 {
-    RegexState* state = (RegexState*) malloc(sizeof(RegexState));
-    state->type = type;
-    state->ch = 0;
-    state->prev = nullptr;
-    state->next = nullptr;
-    state->inner = nullptr;
-    return state;
-}
-
-RegexState* CreateStateChar(char ch)
-{
-    RegexState* s = CreateState('c');
-    s->ch = ch;
-    return s;
-}
-
-RegexState* Regexp_ParseInternal(const char** pattern)
-{
-    RegexState *head = nullptr, *current = nullptr, *prev = nullptr;
-
-    while (*pattern &&
-          **pattern != '\0' &&
-          **pattern != ')')
+    void LinkStates(RegexpState*a, RegexpState*b)
     {
-        switch (**pattern)
+        if (a != nullptr) a->next = b;
+        if (b != nullptr) b->prev = a;
+    }
+
+    void SetupState(RegexpState* state, char type, char match)
+    {
+        state->type  = type;
+        state->match = match;
+        state->prev  = nullptr;
+        state->next  = nullptr;
+        state->inner = nullptr;
+    }
+
+    RegexpState* Regexp_Create(std::string pattern)
+    {
+        std::stack<RegexpState*> statesStack;
+
+        int usedStates = 0;
+        int bufferSize = pattern.size() + 1;
+        RegexpState*regexp = (RegexpState*) malloc(bufferSize * sizeof(RegexpState));
+
+        auto it = pattern.begin();
+        auto end = pattern.end();
+
+        RegexpState *prev = nullptr;
+        RegexpState *current = nullptr;
+        while (it != end)
         {
-        case '^':
-            current = CreateState('^');
-            break;
-        case '$':
-            current = CreateState('$');
-            break;
-        case '.':
-            current = CreateState('.');
-            break;
-        case '?':
-        case '*':
-            if (prev == nullptr)
+            if (usedStates>=bufferSize)
+            {
+                printf("LightRegexpStatep::Error: Unexpected out of memory!\n");
+                Regexp_Destroy(regexp); // Free memory on fail
                 return nullptr;
-            current = CreateState(**pattern);
-            current->inner = prev;
-            // Step back
-            prev = prev->prev;
-            break;
-        case '(':
-            (*pattern)++;
-            RegexState*temp = Regexp_ParseInternal(pattern);
-            if (!*pattern || **pattern != ')')
-                return nullptr;
-            current = CreateState('(');
-            current->inner = temp;
-            temp->prev = current; // Keep link for future usage
-            break;
-        }
-
-        if (current == nullptr)
-            current = CreateStateChar(**pattern);
-
-        if (head == nullptr)
-            head = current;
-        LinkStates(prev, current);
-        prev = current;
-        current = nullptr;
-
-        (*pattern)++;
-    }
-
-    if (prev)
-    {
-        current = CreateState('\0');
-        LinkStates(prev, current);
-    }
-
-    return head;
-}
-
-RegexState* Regexp_Parse(const char* pattern)
-{
-    return Regexp_ParseInternal(&pattern);
-}
-
-RegexMatch Regexp_MatchInternal(RegexState* state, const char* str)
-{
-    RegexMatch match;
-    match.success = false;
-    match.start = str;
-    match.end = str;
-
-    if (state == nullptr)
-    {
-        return match;
-    }
-
-    if (state->type == '\0')
-    {
-        match.success = true;
-        return match;
-    }
-
-    while (state->type != '\0')
-    {
-        switch (state->type)
-        {
+            }
+            switch (*it)
+            {
             case '^':
-                // Error!
-                match.success = false;
-                return match;
             case '$':
-                // Check for end
-                match.success = (*str == '\0');
-                return match;
-            case 'c':
-                if (*str == state->ch)
-                    return Regexp_MatchInternal(state->next, str + 1);
-                break;
             case '.':
-                if (*str != '\0')
-                    return Regexp_MatchInternal(state->next, str + 1);
-                break;
-            case '*':
-                while(true)
-                {
-                    RegexMatch subMatchRepeat = Regexp_MatchInternal(state->inner, str + 1);
-                    if (!subMatchRepeat.success)
-                        break;
-                    str = subMatchRepeat.end;
-                }
+                current = &regexp[usedStates++];
+                SetupState(current, *it, '\0');
                 break;
             case '?':
-                RegexMatch subMatchBranch = Regexp_MatchInternal(state->inner, str + 1);
-                if (subMatchBranch.success)
-                    str = subMatchBranch.end;
+            case '*':
+                if (prev == nullptr)
+                    return nullptr;
+                current = &regexp[usedStates++];
+                SetupState(current, *it, '\0');
+                current->inner = prev;          // Put prev as child
+                prev = prev->prev;              // Step back
+                current->inner->prev = current; // Link parent
                 break;
-        }
-        state = state->next;
-        str++;
-    }
+            case '(':
+                current = &regexp[usedStates++];
+                SetupState(current, *it, '\0');
+                statesStack.push(current);
+                break;
+            case ')':
+                if (statesStack.empty())
+                {
+                    printf("LightRegexpStatep::Error: incorrect order of parentheses ( ) !\n");
+                    Regexp_Destroy(regexp); // Free memory on fail
+                    return nullptr;
+                }
+                current = statesStack.top();
+                statesStack.pop();
 
-    match.success = true;
-    match.end = str;
-    return match;
-}
-
-RegexMatch Regexp_Match(RegexState* regexp, const char* str)
-{
-    RegexMatch match;
-    match.success = false;
-    match.start = str;
-    match.end = str;
-
-    if (regexp->type == '^')
-    {
-        return Regexp_MatchInternal(regexp->next, str);
-    }
-    do
-    {
-        match = Regexp_MatchInternal(regexp, str);
-        if (match.success)
-            return match;
-    }
-    while (*str++ != '\0');
-
-    match.success = false;
-    return match;
-}
-
-RegexMatch Regexp_Find(RegexState* regexp, const char* str)
-{
-    /*
-    RegexMatch *matches = NULL, *lastMatch = NULL;
-    const char* currentPos = str;
-
-    while (*currentPos != '\0') {
-        RegexMatch* match = findMatchFromPosition(regexp, currentPos, currentPos);
-        if (match) {
-            if (matches == NULL) {
-                matches = match;
-            } else {
-                //lastMatch->next = match;
+                prev = current->prev;
+                current->inner = current->next;
+                current->next = nullptr;
+                break;
+            default:
+                current = &regexp[usedStates++];
+                SetupState(current, 'c', *it);
             }
-            lastMatch = match;
-            currentPos = 0;//match->end + 1;  // Начнем поиск со следующей позиции после найденного совпадения
-        } else {
-            currentPos++;
+
+            LinkStates(prev, current);
+            prev = current;
+            current = nullptr;
+
+            ++it;
         }
+
+        if (prev)
+        {
+            current = &regexp[usedStates++];
+            SetupState(current, '\0', '\0');
+            LinkStates(prev, current);
+        }
+
+        if (!statesStack.empty())
+        {
+            printf("LightRegexpStatep::Error: incorrect order of parentheses ( ) !\n");
+            Regexp_Destroy(regexp); // Free memory on fail
+            return nullptr;
+        }
+
+        regexp = (RegexpState*) realloc(regexp, usedStates * sizeof(RegexpState));
+        return regexp;
     }
-    //*/
-    RegexMatch match;
-    match.success = false;
-    match.start = nullptr;
-    match.end = nullptr;
-    return match;
-}
 
-void pind(int indent)
-{
-    while(indent-->0)
-        printf("  ");
-}
-
-void Regexp_Dump(RegexState*state, int indent)
-{
-    if (state==nullptr)
+    void Regexp_Destroy(RegexpState* regexp)
     {
-        pind(indent);
-        printf("null state!\n");
-        return;
+        if (regexp != nullptr)
+            free(regexp);
     }
 
-    pind(indent); printf("State '%c' : '%c' %p\n", state->type, state->ch, (void*) state);
-    if (state->inner != nullptr)
-        Regexp_Dump(state->inner, indent + 1);
-    if (state->next != nullptr)
-        Regexp_Dump(state->next, indent);
+    RegexpMatch Regexp_MatchInternal(RegexpState* state, std::string str)
+    {
+        /*
+        RegexpMatch RegexpMatch;
+        RegexpMatch.success = false;
+        //RegexpMatch.start = str;
+        //RegexpMatch.end = str;
+
+        if (state == nullptr)
+        {
+            return RegexpMatch;
+        }
+
+        if (state->type == '\0')
+        {
+            RegexpMatch.success = true;
+            return RegexpMatch;
+        }
+
+        while (state->type != '\0')
+        {
+            switch (state->type)
+            {
+                case '^':
+                    // Error!
+                    RegexpMatch.success = false;
+                    return RegexpMatch;
+                case '$':
+                    // Check for end
+                    RegexpMatch.success = (*str == '\0');
+                    return RegexpMatch;
+                case 'c':
+                    if (*str == state->ch)
+                        return RegexpStatep_RegexpMatchInternal(state->next, str + 1);
+                    break;
+                case '.':
+                    if (*str != '\0')
+                        return RegexpStatep_RegexpMatchInternal(state->next, str + 1);
+                    break;
+                case '*':
+                    while(true)
+                    {
+                        RegexpMatch subRegexpMatchRepeat = RegexpStatep_RegexpMatchInternal(state->inner, str + 1);
+                        if (!subRegexpMatchRepeat.success)
+                            break;
+                        str = subRegexpMatchRepeat.end;
+                    }
+                    break;
+                case '?':
+                    RegexpMatch subRegexpMatchBranch = RegexpStatep_RegexpMatchInternal(state->inner, str + 1);
+                    if (subRegexpMatchBranch.success)
+                        str = subRegexpMatchBranch.end;
+                    break;
+            }
+            state = state->next;
+            str++;
+        }
+        //*/
+
+        RegexpMatch match;
+        match.success = true;
+        match.substring = str;
+        return match;
+    }
+
+    RegexpMatch Regexp_Match(RegexpState* RegexpStatep, std::string str)
+    {
+        RegexpMatch match;
+        match.success = false;
+        match.substring = str;
+
+        /*
+        if (RegexpStatep->type == '^')
+        {
+            return RegexpStatep_RegexpMatchInternal(RegexpStatep->next, str);
+        }
+        do
+        {
+            match = RegexpStatep_RegexpMatchInternal(RegexpStatep, str);
+            if (match.success)
+                return match;
+        }
+        while (*str++ != '\0');
+        //*/
+
+        match.success = false;
+        return match;
+    }
+
+    RegexpMatch Regexp_Find(RegexpState* RegexpStatep, std::string str)
+    {
+        /*
+        RegexpMatch *RegexpMatches = NULL, *lastRegexpMatch = NULL;
+        const char* currentPos = str;
+
+        while (*currentPos != '\0') {
+            RegexpMatch* RegexpMatch = findRegexpMatchFromPosition(RegexpStatep, currentPos, currentPos);
+            if (RegexpMatch) {
+                if (RegexpMatches == NULL) {
+                    RegexpMatches = RegexpMatch;
+                } else {
+                    //lastRegexpMatch->next = RegexpMatch;
+                }
+                lastRegexpMatch = RegexpMatch;
+                currentPos = 0;//RegexpMatch->end + 1;  // Начнем поиск со следующей позиции после найденного совпадения
+            } else {
+                currentPos++;
+            }
+        }
+        //*/
+        RegexpMatch match;
+        match.success = false;
+        match.substring = str;
+        return match;
+    }
+
+    void pind(int indent)
+    {
+        while(indent-->0)
+            printf("  ");
+    }
+
+    void Regexp_Dump(RegexpState*state, int indent)
+    {
+        if (state==nullptr)
+        {
+            pind(indent);
+            printf("null state!\n");
+            return;
+        }
+
+        pind(indent); printf("State '%c' : '%c' %p\n", state->type, state->match, (void*) state);
+        if (state->inner != nullptr)
+            Regexp_Dump(state->inner, indent + 1);
+        if (state->next != nullptr)
+            Regexp_Dump(state->next, indent);
+    }
 }

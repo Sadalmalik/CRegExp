@@ -1,6 +1,7 @@
 # depslib dependency file v1.0
-1694558275 source:d:\programming\cpp\cregexp\main.cpp
+1694637309 source:d:\programming\cpp\cregexp\main.cpp
 	<iostream>
+	<string>
 	"bitmask.hpp"
 	"cregex.hpp"
 
@@ -28,16 +29,18 @@
 	<ctype.h>
 	<stdio.h>
 
-1694558049 source:d:\programming\cpp\cregexp\cregex.cpp
-	<stdio.h>
+1694637333 source:d:\programming\cpp\cregexp\cregex.cpp
 	"cregex.hpp"
+	<stdio.h>
+	<stack>
 
 1694384001 d:\programming\cpp\cregexp\bitmask.hpp
 	<stdbool.h>
 	<stdint.h>
 
-1694556855 d:\programming\cpp\cregexp\cregex.hpp
-	<stdlib.h>
+1694637101 d:\programming\cpp\cregexp\cregex.hpp
 	<ctype.h>
+	<stdlib.h>
 	<stdbool.h>
+	<string>
 

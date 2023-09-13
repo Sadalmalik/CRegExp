@@ -1,31 +1,35 @@
 #ifndef REGEXP
 #define REGEXP
 
-#include <stdlib.h>
 #include <ctype.h>
+#include <stdlib.h>
 #include <stdbool.h>
+#include <string>
 
-typedef struct RegexState RegexState;
-typedef struct RegexMatch RegexMatch;
-
-struct RegexState {
-    char type;
-    char ch;
-    RegexState* prev;
-    RegexState* next;
-    RegexState* inner;
-};
-
-struct RegexMatch
+namespace LightRegexp
 {
-    bool success;
-    const char* start;
-    const char* end;
-};
+    typedef struct RegexpState RegexpState;
+    typedef struct RegexpMatch RegexpMatch;
 
-RegexState* Regexp_Parse    (const char* pattern);
-RegexMatch  Regexp_Match    (RegexState* regexp, const char* str);
-RegexMatch  Regexp_Find     (RegexState* regexp, const char* str);
-void        Regexp_Dump     (RegexState*state, int indent);
+    struct RegexpState {
+        char type;
+        char match;
+        RegexpState* prev;
+        RegexpState* next;
+        RegexpState* inner;
+    };
+
+    struct RegexpMatch
+    {
+        bool success;
+        std::string substring;
+    };
+
+    RegexpState*    Regexp_Create   (std::string pattern);
+    void            Regexp_Destroy  (RegexpState* regexp);
+    RegexpMatch     Regexp_Match    (RegexpState* regexp, std::string str);
+    RegexpMatch     Regexp_Find     (RegexpState* regexp, std::string str);
+    void            Regexp_Dump     (RegexpState* regexp, int indent);
+}
 
 #endif
