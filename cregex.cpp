@@ -14,6 +14,8 @@ namespace LiRex
     TRegex* AllocateRegexp(string&pattern, size_t bufferSize)
     {
         TRegex*regexp = (TRegex*) malloc(sizeof(TRegex) + bufferSize * sizeof(TState));
+        if (regexp == nullptr)
+            return regexp;
         new (&regexp->raw) string(pattern);
         regexp->start = nullptr;
         regexp->groups = 0;
@@ -33,9 +35,9 @@ namespace LiRex
         return state;
     }
 
-    void TrimRegexp(TRegex*regexp)
+    TRegex* TrimRegexp(TRegex *regexp)
     {
-        regexp = (TRegex*) realloc((void*) regexp, sizeof(TRegex) + regexp->size * sizeof(TState));
+        return (TRegex*) realloc((void*) regexp, sizeof(TRegex) + regexp->size * sizeof(TState));
     }
 
     TRegex* Create(std::string pattern)
@@ -127,7 +129,7 @@ namespace LiRex
             return nullptr;
         }
 
-        TrimRegexp(regexp);
+        regexp = TrimRegexp(regexp);
         return regexp;
     }
 

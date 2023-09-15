@@ -36,7 +36,7 @@ namespace LiRex
 
     struct Match
     {
-        bool success;
+        bool success = false;
         string match;
         string::const_iterator end;
         vector<string> groups;
