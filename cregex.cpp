@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stack>
 
-namespace LightRegex
+namespace LiRex
 {
     void LinkStates(TState*a, TState*b)
     {
@@ -11,82 +11,108 @@ namespace LightRegex
         if (b != nullptr) b->prev = a;
     }
 
-    void SetupState(TState* state, char type, char match)
+    TRegex* AllocateRegexp(string&pattern, size_t bufferSize)
     {
+        TRegex*regexp = (TRegex*) malloc(sizeof(TRegex) + bufferSize * sizeof(TState));
+        new (&regexp->raw) string(pattern);
+        regexp->start = nullptr;
+        regexp->groups = 0;
+        regexp->size = 0;
+        return regexp;
+    }
+
+    TState* CreateState(TRegex*regexp, char type, char match)
+    {
+        TState *state = &regexp->states[regexp->size];
+        regexp->size++;
         state->type  = type;
         state->match = match;
         state->prev  = nullptr;
         state->next  = nullptr;
         state->inner = nullptr;
+        return state;
+    }
+
+    void TrimRegexp(TRegex*regexp)
+    {
+        regexp = (TRegex*) realloc((void*) regexp, sizeof(TRegex) + regexp->size * sizeof(TState));
     }
 
     TRegex* Create(std::string pattern)
     {
-        int usedStates = 0;
-        int bufferSize = pattern.size() + 1;
+        size_t bufferSize = pattern.size() * 2 + 1;
+        TRegex*regexp = AllocateRegexp(pattern, bufferSize);
 
-        void*memory = malloc(sizeof(TRegex) + bufferSize * sizeof(TState));
-        TRegex*regexp = (TRegex*)memory;
-        regexp->groups = 0;
-        TState*states = (TState*) (regexp + 1);
-
-        auto it = pattern.begin();
-        auto end = pattern.end();
+        std::string::iterator it = pattern.begin();
+        std::string::iterator sEnd = pattern.end();
 
         TState *prev = nullptr;
         TState *current = nullptr;
         std::stack<TState*> statesStack;
-        while (it != end)
+        while (it != sEnd)
         {
-            if (usedStates>=bufferSize)
+            if (regexp->size >= bufferSize)
             {
-                printf("LightRegex::Error: Unexpected out of memory!\n");
+                printf("LiRex::Error: Unexpected out of memory!\n");
                 Destroy(regexp); // Free memory on fail
                 return nullptr;
             }
+
             switch (*it)
             {
             case '^':
             case '$':
             case '.':
-                current = &states[usedStates++];
-                SetupState(current, *it, '\0');
+                current = CreateState(regexp, *it, '\0');
                 break;
             case '?':
             case '*':
                 if (prev == nullptr)
+                {
+                    printf("LiRex::Error: symbol '%c' can't be first in pattern!\n", *it);
+                    Destroy(regexp); // Free memory on fail
                     return nullptr;
-                current = &states[usedStates++];
-                SetupState(current, *it, '\0');
+                }
+                current = CreateState(regexp, *it, '\0');
                 current->inner = prev;          // Put prev as child
-                prev = prev->prev;              // Step back
                 current->inner->prev = current; // Link parent
+                prev = prev->prev;              // Step back
                 break;
             case '(':
-                current = &states[usedStates++];
-                SetupState(current, *it, '\0');
+                current = CreateState(regexp, *it, '\0');
                 statesStack.push(current);
                 break;
             case ')':
                 if (statesStack.empty())
                 {
-                    printf("LightRegex::Error: incorrect order of parentheses ( ) !\n");
+                    printf("LiRex::Error: incorrect order of parentheses ( ) !\n");
                     Destroy(regexp); // Free memory on fail
                     return nullptr;
                 }
+                regexp->groups++;
                 current = statesStack.top();
                 statesStack.pop();
-
                 prev = current->prev;
                 current->inner = current->next;
                 current->next = nullptr;
-                regexp->groups++;
+                break;
+            case '\\':
+                ++it;
+                if (it == sEnd)
+                {
+                    printf("LiRex::Error: symbol '%c' can't be last in pattern!\n", *it);
+                    Destroy(regexp); // Free memory on fail
+                    return nullptr;
+                }
+                current = CreateState(regexp, 'c', *it);
                 break;
             default:
-                current = &states[usedStates++];
-                SetupState(current, 'c', *it);
+                current = CreateState(regexp, 'c', *it);
+                break;
             }
 
+            if (regexp->start == nullptr)
+                regexp->start = current;
             LinkStates(prev, current);
             prev = current;
             current = nullptr;
@@ -94,94 +120,97 @@ namespace LightRegex
             ++it;
         }
 
-        if (prev)
-        {
-            current = &states[usedStates++];
-            SetupState(current, '\0', '\0');
-            LinkStates(prev, current);
-        }
-
         if (!statesStack.empty())
         {
-            printf("LightRegex::Error: incorrect order of parentheses ( ) !\n");
+            printf("LiRex::Error: incorrect order of parentheses ( ) !\n");
             Destroy(regexp); // Free memory on fail
             return nullptr;
         }
 
-        regexp = (TRegex*) realloc(memory, sizeof(TRegex) + usedStates * sizeof(TState));
-        new (&regexp->raw) std::string();
-        regexp->raw = pattern;
-        regexp->size = usedStates;
+        TrimRegexp(regexp);
         return regexp;
     }
 
     void Destroy(TRegex* regexp)
     {
         if (regexp != nullptr)
+        {
+            regexp->raw.~string();
             free(regexp);
+        }
     }
 
-    TMatch Regexp_MatchInternal(TRegex* state, std::string str)
+    typedef struct Frame TFrame;
+    struct Frame
     {
-        /*
-        RegexpMatch RegexpMatch;
-        RegexpMatch.success = false;
-        //RegexpMatch.start = str;
-        //RegexpMatch.end = str;
+        TState*state;
+        string::const_iterator start;
+    };
 
-        if (state == nullptr)
-        {
-            return RegexpMatch;
-        }
+    TMatch MatchInternal(
+            TState* state,
+            string::const_iterator sBegin,
+            string::const_iterator sEnd)
+    {
+        TMatch match = TMatch();
+        match.success = true;
 
-        if (state->type == '\0')
-        {
-            RegexpMatch.success = true;
-            return RegexpMatch;
-        }
+        // Empty regexp match anything!
+        if (state==nullptr)
+            return match;
 
-        while (state->type != '\0')
+        TMatch subMatch;
+        string::const_iterator it = sBegin;
+
+        while ( it != sEnd )
         {
             switch (state->type)
             {
-                case '^':
-                    // Error!
-                    RegexpMatch.success = false;
-                    return RegexpMatch;
-                case '$':
-                    // Check for end
-                    RegexpMatch.success = (*str == '\0');
-                    return RegexpMatch;
-                case 'c':
-                    if (*str == state->ch)
-                        return RegexpStatep_RegexpMatchInternal(state->next, str + 1);
+            case '^':
+                // Error!
+                match.success = false;
+                return match;
+            case '$':
+                // Check for end
+                match.success = (*it == '\0');
+                return match;
+            case 'c':
+                if (*it == state->match)
                     break;
-                case '.':
-                    if (*str != '\0')
-                        return RegexpStatep_RegexpMatchInternal(state->next, str + 1);
+                match.success = false;
+                return match;
+            case '.':
+                if (*it != '\0')
                     break;
-                case '*':
-                    while(true)
-                    {
-                        RegexpMatch subRegexpMatchRepeat = RegexpStatep_RegexpMatchInternal(state->inner, str + 1);
-                        if (!subRegexpMatchRepeat.success)
-                            break;
-                        str = subRegexpMatchRepeat.end;
-                    }
-                    break;
-                case '?':
-                    RegexpMatch subRegexpMatchBranch = RegexpStatep_RegexpMatchInternal(state->inner, str + 1);
-                    if (subRegexpMatchBranch.success)
-                        str = subRegexpMatchBranch.end;
-                    break;
+                // Anything except end of string;
+                match.success = false;
+                return match;
+            case '?':
+                subMatch = MatchInternal(state->inner, it, sEnd);
+                if (subMatch.success)
+                    it = subMatch.end;
+                break;
+            case '*':
+                do {
+                    subMatch = MatchInternal(state->inner, it, sEnd);
+                    if (subMatch.success)
+                        it = subMatch.end;
+                } while (subMatch.success);
+                break;
+            case '(':
+                subMatch = MatchInternal(state->inner, it, sEnd);
+                if (!subMatch.success)
+                {
+                    match.success = false;
+                    return match;
+                }
+                match.groups.push_back(string(it, subMatch.end));
+                continue;
             }
             state = state->next;
-            str++;
+            ++it;
         }
-        //*/
 
-        TMatch match;
-        match.success = true;
         return match;
     }
 
@@ -190,19 +219,21 @@ namespace LightRegex
         TMatch match;
         match.success = false;
 
-        /*
-        if (RegexpStatep->type == '^')
+        string::const_iterator sBegin = str.begin();
+        string::const_iterator sEnd = str.end();
+
+        TState*state = &regexp->states[0];
+        if (state->type == '^')
         {
-            return RegexpStatep_RegexpMatchInternal(RegexpStatep->next, str);
+            return MatchInternal(state->next, sBegin, sEnd);
         }
         do
         {
-            match = RegexpStatep_RegexpMatchInternal(RegexpStatep, str);
+            match = MatchInternal(state, sBegin, sEnd);
             if (match.success)
                 return match;
         }
-        while (*str++ != '\0');
-        //*/
+        while (*sBegin++ != '\0');
 
         match.success = false;
         return match;
@@ -264,6 +295,6 @@ namespace LightRegex
             return;
         }
 
-        DumpState(regexp->states, 0);
+        DumpState(regexp->start, 0);
     }
 }

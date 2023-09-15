@@ -38,10 +38,10 @@ void TestGetBit(BitMask*mask, int bit)
 
 void TestParse(std::string str)
 {
-    printf("regex '%s':\n", str.c_str());
-    LightRegex::TRegex*reg = LightRegex::Create(str);
-    LightRegex::Dump(reg);
-    LightRegex::Destroy(reg);
+    LiRex::TRegex*reg = LiRex::Create(str);
+    printf("regex '%s':\n", reg->raw.c_str());
+    LiRex::Dump(reg);
+    LiRex::Destroy(reg);
     printf("\n");
 
 }
@@ -52,6 +52,8 @@ int main()
     //RegexState*reg;
 
     TestParse("a");
+    TestParse("a?");
+    TestParse("a*");
     TestParse("abc");
     TestParse("abc?");
     TestParse("abc?x..");

@@ -5,16 +5,16 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string>
+#include <vector>
 
-namespace LightRegex
+// LiRex - Light Regex
+namespace LiRex
 {
     using namespace std;
 
     typedef struct Regex TRegex;
     typedef struct State TState;
     typedef struct Match TMatch;
-    typedef struct Group TGroup;
-
 
     struct State
     {
@@ -28,21 +28,18 @@ namespace LightRegex
     struct Regex
     {
         string raw;
+        TState*start;
         int groups;
         int size;
         TState states[0];
     };
 
-    struct Group
-    {
-        std::string substring;
-    };
-
     struct Match
     {
         bool success;
-        int size;
-        TGroup groups[0];
+        string match;
+        string::const_iterator end;
+        vector<string> groups;
     };
 
     TRegex* Create   (std::string pattern);
