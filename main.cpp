@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 #include "bitarray.hpp"
-#include "cregex.hpp"
+#include "light_regexp.hpp"
 
 
 void TestBitArray();
@@ -110,7 +110,7 @@ void TestRegExp()
     TestParse("a(bcx)*ef?t");
     printf("\n");
 
-    std::string raw_regex = "a(bc)?de?f";
+    std::string raw_regex = "a(bc)*de*f";
     LiRex::TRegex* reg = LiRex::Create(raw_regex);
     printf("Test regex: '%s'\n", raw_regex.c_str());
     TestMatch(reg, "a");
@@ -122,8 +122,18 @@ void TestRegExp()
     TestMatch(reg, "abcdf");
     TestMatch(reg, "abcdef");
     TestMatch(reg, "abcbcdf");
-    TestMatch(reg, "abcbcdef");
+    TestMatch(reg, "adeeef");
+    TestMatch(reg, "adeeeff");
+    TestMatch(reg, "areeeff");
     LiRex::Destroy(reg);
+    printf("\n");
+
+    raw_regex = "a(bc)*de*f";
+    reg = LiRex::Create(raw_regex);
+    printf("Test regex: '%s'\n", raw_regex.c_str());
+    TestMatch(reg, "areeeff");
+    LiRex::Destroy(reg);
+    printf("\n");
 
     printf("Regexp tests done.\n\n\n");
 }

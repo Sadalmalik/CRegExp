@@ -128,12 +128,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="bitarray.cpp" />
-    <ClCompile Include="cregex.cpp" />
+    <ClCompile Include="light_regexp.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bitarray.hpp" />
-    <ClInclude Include="cregex.hpp" />
+    <ClInclude Include="light_regexp.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="notes.txt" />

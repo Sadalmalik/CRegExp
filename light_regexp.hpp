@@ -44,7 +44,6 @@ namespace LiRex
 
     TRegex* Create   (std::string pattern);
     void    Destroy  (TRegex* regexp);
-
     TMatch  Match    (TRegex* regexp, std::string str);
     TMatch  Find     (TRegex* regexp, std::string str);
     void    Dump     (TRegex* regexp);

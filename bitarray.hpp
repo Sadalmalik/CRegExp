@@ -11,11 +11,11 @@ namespace Bitarray
         int8_t bytes[0];
     } BitArray;
 
-    size_t      SizeOfBits(int size);
-    BitArray*   Create(int size);
-    void        Destroy(BitArray* mask);
-    void        SetBit(BitArray* mask, int bit, bool value);
-    bool        GetBit(BitArray* mask, int bit);
+    size_t      SizeOfBits  (int size);
+    BitArray*   Create      (int size);
+    void        Destroy     (BitArray* array);
+    void        SetBit      (BitArray* array, int bit, bool value);
+    bool        GetBit      (BitArray* array, int bit);
 }
 
 #endif

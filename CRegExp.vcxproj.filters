@@ -18,7 +18,7 @@
     <ClCompile Include="bitarray.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="cregex.cpp">
+    <ClCompile Include="light_regexp.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp">
@@ -29,7 +29,7 @@
     <ClInclude Include="bitarray.hpp">
       <Filter>Исходные файлы</Filter>
     </ClInclude>
-    <ClInclude Include="cregex.hpp">
+    <ClInclude Include="light_regexp.hpp">
       <Filter>Исходные файлы</Filter>
     </ClInclude>
   </ItemGroup>

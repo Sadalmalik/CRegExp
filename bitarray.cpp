@@ -21,14 +21,14 @@ namespace Bitarray
         return mask;
     }
 
-    void Destroy(BitArray* mask)
+    void Destroy(BitArray* array)
     {
-        free(mask);
+        free(array);
     }
 
-    void SetBit(BitArray* mask, int bit, bool value)
+    void SetBit(BitArray* array, int bit, bool value)
     {
-        if (bit < 0 || mask->size <= bit)
+        if (bit < 0 || array->size <= bit)
         {
             printf("Bitarray::Error: Try access bit outside of bitarray!\n");
             //exit(10000);
@@ -37,14 +37,14 @@ namespace Bitarray
         int i = bit / 8;
         int s = bit % 8;
         if (value)
-            mask->bytes[i] |= 1 << s;
+            array->bytes[i] |= 1 << s;
         else
-            mask->bytes[i] &= ~(1 << s);
+            array->bytes[i] &= ~(1 << s);
     }
 
-    bool GetBit(BitArray* mask, int bit)
+    bool GetBit(BitArray* array, int bit)
     {
-        if (bit < 0 || mask->size <= bit)
+        if (bit < 0 || array->size <= bit)
         {
             printf("Bitarray::Error: Try access bit outside of bitarray!\n");
             //exit(10000);
@@ -52,7 +52,7 @@ namespace Bitarray
         }
         int i = bit / 8;
         int s = bit % 8;
-        return 0 != (mask->bytes[i] & (1 << s));
+        return 0 != (array->bytes[i] & (1 << s));
     }
 
 }

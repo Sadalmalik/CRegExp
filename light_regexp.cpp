@@ -1,4 +1,4 @@
-#include "cregex.hpp"
+#include "light_regexp.hpp"
 
 #include <stdio.h>
 #include <stack>
@@ -216,9 +216,11 @@ namespace LiRex
                 {
                     subMatch = MatchInternal(state->inner, it, sEnd);
                     if (!subMatch.success) break;
-                    it = subMatch.last;
                     AddGroups(match, subMatch);
+                    it = subMatch.last;
+                    ++it;
                 }
+                --it;
                 break;
             case '(':
                 subMatch = MatchInternal(state->inner, it, sEnd);
