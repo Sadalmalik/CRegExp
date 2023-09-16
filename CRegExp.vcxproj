@@ -127,12 +127,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="bitmask.cpp" />
+    <ClCompile Include="bitarray.cpp" />
     <ClCompile Include="cregex.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="bitmask.hpp" />
+    <ClInclude Include="bitarray.hpp" />
     <ClInclude Include="cregex.hpp" />
   </ItemGroup>
   <ItemGroup>

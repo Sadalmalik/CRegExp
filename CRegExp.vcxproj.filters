@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="bitmask.cpp">
+    <ClCompile Include="bitarray.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
     <ClCompile Include="cregex.cpp">
@@ -26,7 +26,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="bitmask.hpp">
+    <ClInclude Include="bitarray.hpp">
       <Filter>Исходные файлы</Filter>
     </ClInclude>
     <ClInclude Include="cregex.hpp">

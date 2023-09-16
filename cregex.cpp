@@ -77,8 +77,12 @@ namespace LiRex
                 }
                 current = CreateState(regexp, *it, '\0');
                 current->inner = prev;          // Put prev as child
-                current->inner->prev = current; // Link parent
                 prev = prev->prev;              // Step back
+                current->inner->prev = current; // Link parent
+                if (prev == nullptr)
+                {
+                    regexp->start = current;
+                }
                 break;
             case '(':
                 current = CreateState(regexp, *it, '\0');
@@ -297,6 +301,7 @@ namespace LiRex
             return;
         }
 
+        printf("Dump regexp '%s' with %d groups:\n", regexp->raw.c_str(), regexp->groups);
         DumpState(regexp->start, 0);
     }
 }

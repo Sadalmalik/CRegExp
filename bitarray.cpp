@@ -1,36 +1,36 @@
-#include "bitmask.hpp"
+#include "bitarray.hpp"
 
 #include <stdlib.h>
 #include <ctype.h>
 #include <stdio.h>
 
-namespace bitmask
+namespace Bitarray
 {
     size_t SizeOfBits(int size)
     {
-        return size / 8 + ((size % 8) > 0);
+        return (size / 8) + ((size % 8) > 0);
     }
 
-    BitMask* Create(int size)
+    BitArray* Create(int size)
     {
         size_t byteLen = SizeOfBits(size);
-        BitMask* mask = (BitMask*) malloc(sizeof(BitMask) + byteLen);
+        BitArray* mask = (BitArray*) malloc(sizeof(BitArray) + byteLen);
         if (mask == nullptr)
             return mask;
         mask->size = size;
         return mask;
     }
 
-    void Destroy(BitMask* mask)
+    void Destroy(BitArray* mask)
     {
         free(mask);
     }
 
-    void SetBit(BitMask* mask, int bit, bool value)
+    void SetBit(BitArray* mask, int bit, bool value)
     {
         if (bit < 0 || mask->size <= bit)
         {
-            printf("Try access bit outside of bitmask!\n");
+            printf("Bitarray::Error: Try access bit outside of bitarray!\n");
             //exit(10000);
             return;
         }
@@ -42,11 +42,11 @@ namespace bitmask
             mask->bytes[i] &= ~(1 << s);
     }
 
-    bool GetBit(BitMask* mask, int bit)
+    bool GetBit(BitArray* mask, int bit)
     {
         if (bit < 0 || mask->size <= bit)
         {
-            printf("Try access bit outside of bitmask!\n");
+            printf("Bitarray::Error: Try access bit outside of bitarray!\n");
             //exit(10000);
             return false;
         }
