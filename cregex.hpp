@@ -38,12 +38,13 @@ namespace LiRex
     {
         bool success = false;
         string match;
-        string::const_iterator end;
+        string::const_iterator last;
         vector<string> groups;
     };
 
     TRegex* Create   (std::string pattern);
     void    Destroy  (TRegex* regexp);
+
     TMatch  Match    (TRegex* regexp, std::string str);
     TMatch  Find     (TRegex* regexp, std::string str);
     void    Dump     (TRegex* regexp);

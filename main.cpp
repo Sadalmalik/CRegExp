@@ -76,11 +76,29 @@ void TestParse(std::string str)
     LiRex::Dump(reg);
     LiRex::Destroy(reg);
     std::printf("\n");
+}
 
+void TestMatch(LiRex::TRegex* regexp, std::string text)
+{
+    LiRex::TMatch m = LiRex::Match(regexp, text);
+    if (m.success)
+    {
+        int len = (int) m.groups.size();
+        std::printf("Match '%s' -> Success\n  Match: '%s'\n  Groups %d:\n", text.c_str(), m.match.c_str(), len);
+        for (int i=0;i<len;i++)
+            std::printf("    %d: '%s'\n", i, m.groups[i].c_str());
+    }
+    else
+    {
+        std::printf("Match '%s' -> Fail\n", text.c_str());
+    }
 }
 
 void TestRegExp()
 {
+    printf("Regexp tests.\n\n");
+
+    printf("Test parse.\n");
     TestParse("a");
     TestParse("a?");
     TestParse("a*");
@@ -90,13 +108,22 @@ void TestRegExp()
     TestParse("a(bc)de");
     TestParse("a(bc)?d");
     TestParse("a(bcx)*ef?t");
+    printf("\n");
 
-    /*
-    TestMatch(reg, "abcxyz");
-    TestMatch(reg, "abcxy");
-    TestMatch(reg, "abcx");
-    TestMatch(reg, "abxyz");
-    TestMatch(reg, "abdxyz");
-    TestMatch(reg, "bddrcg");
-    //*/
+    std::string raw_regex = "a(bc)?de?f";
+    LiRex::TRegex* reg = LiRex::Create(raw_regex);
+    printf("Test regex: '%s'\n", raw_regex.c_str());
+    TestMatch(reg, "a");
+    TestMatch(reg, "adf");
+    TestMatch(reg, "adef");
+    TestMatch(reg, "abdf");
+    TestMatch(reg, "bcdf");
+    TestMatch(reg, "abdf");
+    TestMatch(reg, "abcdf");
+    TestMatch(reg, "abcdef");
+    TestMatch(reg, "abcbcdf");
+    TestMatch(reg, "abcbcdef");
+    LiRex::Destroy(reg);
+
+    printf("Regexp tests done.\n\n\n");
 }

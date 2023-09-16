@@ -146,6 +146,14 @@ namespace LiRex
         }
     }
 
+    void AddGroups(TMatch& dest, TMatch& source)
+    {
+        dest.groups.insert(
+            dest.groups.end(),
+            source.groups.begin(),
+            source.groups.end());
+    }
+
     typedef struct Frame TFrame;
     struct Frame
     {
@@ -168,8 +176,9 @@ namespace LiRex
         TMatch subMatch;
         string::const_iterator it = sBegin;
 
-        while ( it != sEnd )
+        while (it != sEnd && state)
         {
+            //printf("  step: '%c':'%c' == '%c'\n", state->type, state->match, *it);
             switch (state->type)
             {
             case '^':
@@ -183,25 +192,33 @@ namespace LiRex
             case 'c':
                 if (*it == state->match)
                     break;
+                // Only symbol, defined as match
                 match.success = false;
                 return match;
             case '.':
                 if (*it != '\0')
                     break;
-                // Anything except end of string;
+                // Anything except end of string
                 match.success = false;
                 return match;
             case '?':
                 subMatch = MatchInternal(state->inner, it, sEnd);
                 if (subMatch.success)
-                    it = subMatch.end;
+                {
+                    it = subMatch.last;
+                    AddGroups(match, subMatch);
+                    break;
+                }
+                --it;
                 break;
             case '*':
-                do {
+                while(it!=sEnd)
+                {
                     subMatch = MatchInternal(state->inner, it, sEnd);
-                    if (subMatch.success)
-                        it = subMatch.end;
-                } while (subMatch.success);
+                    if (!subMatch.success) break;
+                    it = subMatch.last;
+                    AddGroups(match, subMatch);
+                }
                 break;
             case '(':
                 subMatch = MatchInternal(state->inner, it, sEnd);
@@ -210,12 +227,19 @@ namespace LiRex
                     match.success = false;
                     return match;
                 }
-                match.groups.push_back(string(it, subMatch.end));
-                continue;
+                AddGroups(match, subMatch);
+                match.groups.push_back(string(it, subMatch.last+1));
+                it = subMatch.last;
+                break;
             }
+
             state = state->next;
+            match.last = it;
             ++it;
         }
+
+        if (state != nullptr && it == sEnd)
+            match.success = false;
 
         return match;
     }
@@ -231,17 +255,23 @@ namespace LiRex
         TState*state = &regexp->states[0];
         if (state->type == '^')
         {
-            return MatchInternal(state->next, sBegin, sEnd);
+            match = MatchInternal(state->next, sBegin, sEnd);
+            match.match = std::string(sBegin, match.last+1);
+            return match;
         }
         do
         {
             match = MatchInternal(state, sBegin, sEnd);
             if (match.success)
+            {
+                match.match = std::string(sBegin, match.last+1);
                 return match;
+            }
         }
-        while (*sBegin++ != '\0');
+        while (++sBegin != sEnd);
 
         match.success = false;
+        match.match = std::string("");
         return match;
     }
 
