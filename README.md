@@ -20,8 +20,8 @@ As a result, the use of Chat GPT in work has a huge number of nuances and featur
 
 * First of all, GPT does not have consciousness or understanding as such. He basically doesn’t understand what he’s doing, but he behaves with absolute confidence. Because that's how I was trained.
 * He has no abstract imagination - GPT could not imagine in his head (due to its absence) the structure of the parsing tree, the order of states and the meaning of this order. As a result, he confidently produced code that built connections between objects in an absolutely invalid way.
-* GPT gets it wrong all the time. And in the most human way possible. And over time, errors begin to multiply (due to GPT memory limitations)
-   * For example, he produced code with uninitialized variables. It took me at first half an hour to find the reason for the program crash. And then ask leading questions twice more so that GPT notices the error and suggests a correction. It does not analyze code like a program. And he doesn’t analyze it like a programmer - he doesn’t make any effort to find and fix problems.
+* GPT makes mistakes all the time. And in the most human way possible. And errors begin to multiply over time (due to GPT memory limitations)
+   * For example, he produced code with uninitialized variables. It took me half an hour to find the reason for the program crash. And then ask leading questions twice more so that GPT noticed the error and suggests a correction. It does not analyze code like a program. And he doesn’t analyze it like a programmer - he doesn’t make any effort to find and fix problems.
    * This is generally one of the big problems. He makes no effort to solve any problems. It simply generates a response. As a result, he is not able to solve problems without a large number of leading questions that will lead him to the desired answers.
 * Besides this, GPT has another “lazy” trait - it always tries to give the most simplified answer possible. This is especially true for coding tasks. I suspect it has something to do with the way language models work in general - it's likely that if you force him to give a longer answer, he'll start going crazy.
 
