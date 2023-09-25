@@ -7,7 +7,7 @@
 * [Implementation](#implementation)
 
 
-#Introduction
+# Introduction
 This project is my attempt to learn how to use ChatGPT to do some work (in this case, developing a small library). I used the paid Chat GPT-4 from [openai.com](https://chat.openai.com/). I chose "creating a basic implementation of regular expressions in C" as the work task.
 
 Initially, I tried to do all the code through GPT, but after a number of iterations many problems associated with this became obvious, so I changed my approach to using GPT for consulting and reviewing code. As a result, through joint efforts (in the end, only mine), we managed to implement a version of regular expressions that supports the following characters: `. ? * ( )`
