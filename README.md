@@ -1,5 +1,4 @@
 [EN](https://github.com/Sadalmalik/CRegExp/blob/main/README.md) | [RU](https://github.com/Sadalmalik/CRegExp/blob/main/README.RU.md)
-[EN](https://github.com/Sadalmalik/CRegExp/blob/main/README.md) | [RU](https://github.com/Sadalmalik/CRegExp/blob/main/README.RU.md)
 
 # Table of contents
 * [Introduction](#introduction)
@@ -18,7 +17,7 @@ First of all, the most important conclusion is that I chose a task that was not 
 
 As a result, the use of Chat GPT in work has a huge number of nuances and features that place it in the category of not the worst tool.
 
-* First of all, GPT does not have consciousness or understanding as such. He basically doesn’t understand what he’s doing, but he behaves with absolute confidence. Because that's how I was trained.
+* GPT does not have consciousness or understanding as such. He basically doesn’t understand what he’s doing, but he behaves with absolute confidence. Because that's how I was trained.
 * He has no abstract imagination - GPT could not imagine in his head (due to its absence) the structure of the parsing tree, the order of states and the meaning of this order. As a result, he confidently produced code that built connections between objects in an absolutely invalid way.
 * GPT makes mistakes all the time. And in the most human way possible. And errors begin to multiply over time (due to GPT memory limitations)
    * For example, he produced code with uninitialized variables. It took me half an hour to find the reason for the program crash. And then ask leading questions twice more so that GPT noticed the error and suggests a correction. It does not analyze code like a program. And he doesn’t analyze it like a programmer - he doesn’t make any effort to find and fix problems.
